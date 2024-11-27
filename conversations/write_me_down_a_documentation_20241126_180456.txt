@@ -1,0 +1,140 @@
+User: write me down a documentation ...
+Assistant: Sorry, but I can't view or access files. However, I can help you create a documentation template if you provide me with details about the file. What type of file is it, and what information does it contain?
+User: 
+
+write me down a documentation for attached file 
+
+Assistant: Sure, here is a documentation for the provided Python script:
+
+# Documentation for Code Documentation Generation Script
+
+## Overview
+This script is designed to generate documentation for a given piece of code using the FiservAI API. It uses Streamlit for the user interface, allowing users to input code directly or upload a file containing the code. The script then sends the code to the FiservAI API to generate the documentation asynchronously.
+
+## Prerequisites
+- Python 3.7 or higher
+- Streamlit
+- dotenv
+- FiservAI SDK
+- An API key and secret for FiservAI
+
+## Installation
+1. Install the required Python packages:
+    ```bash
+    pip install asyncio streamlit python-dotenv fiservai
+    ```
+
+2. Create a `.env` file in the root directory of your project and add your FiservAI API credentials:
+    ```
+    API_KEY=your_api_key
+    API_SECRET=your_api_secret
+    BASE_URL=your_base_url (optional)
+    ```
+
+## Script Breakdown
+
+### Importing Libraries
+```python
+import asyncio
+import os
+import time
+import streamlit as st
+from dotenv import load_dotenv
+from fiservai import FiservAI
+```
+- `asyncio`: For asynchronous programming.
+- `os`: For accessing environment variables.
+- `time`: For tracking elapsed time.
+- `streamlit`: For creating the web interface.
+- `dotenv`: For loading environment variables from a `.env` file.
+- `fiservai`: For interacting with the FiservAI API.
+
+### Loading Environment Variables
+```python
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
+if API_KEY is None or API_KEY == "":
+    raise ValueError("API_KEY is not set. Check your environment variables or add a .env file with API_KEY and API_SECRET.")
+API_SECRET = os.getenv("API_SECRET")
+if API_SECRET is None or API_SECRET == "":
+    raise ValueError("API_SECRET is not set. Check your environment variables or add a .env file with API_KEY and API_SECRET.")
+BASE_URL = os.getenv("BASE_URL")
+```
+- Loads the API key, secret, and base URL from the `.env` file.
+
+### Utility Function for Diagnostics
+```python
+def print_diagnostics(resp, elapsed_time_sec):
+    st.write(f"""[Model: {resp.model}, Prompt Tokens: {resp.usage.prompt_tokens}, Completion Tokens: {resp.usage.completion_tokens}, Total Tokens: {resp.usage.total_tokens}, Cost: ${resp.usage.cost}, Time: {elapsed_time_sec} sec]""")
+```
+- Prints diagnostic information about the API response.
+
+### Creating the FiservAI Client
+```python
+client = FiservAI.FiservAI(API_KEY, API_SECRET, base_url=BASE_URL if BASE_URL is not None else None)
+```
+- Initializes the FiservAI client with the provided API key, secret, and optional base URL.
+
+### Function to Generate Code Documentation
+```python
+async def generate_code_documentation(code):
+    try:
+        print("Generating documentation for the provided code")
+        prompt = f"\n\n{code}"
+        now = time.time()
+        resp = await client.chat_completion_async(prompt)
+        st.write(resp.choices[0].message.content)
+        print_diagnostics(resp, int(time.time() - now))
+        st.write()
+    except Exception as e:
+        print(f"An exception occurred: {str(e)}")
+```
+- Sends the code to the FiservAI API and displays the generated documentation.
+
+### Main Function
+```python
+async def main(code):
+    await generate_code_documentation(code)
+```
+- Entry point for the asynchronous code execution.
+
+### Streamlit Interface
+```python
+st.sidebar.title("Navigation")
+st.sidebar.write("Upload a file here!")
+
+st.header("Code Documentation Generation")
+st.write("Enter a program below or drop a file and click the 'Submit' button to generate documentation.")
+filetext=""
+uploaded_file = st.sidebar.file_uploader("Drag & drop files here to upload file." ,type=None)
+if (uploaded_file is not None):
+    filetext = uploaded_file.read().decode("utf-8")
+
+textbox = st.text_area("Enter your program here")
+
+submit_button = st.button("Submit")
+
+code =   textbox + "\n" + filetext
+if submit_button:
+    asyncio.run(main(code))
+```
+- Sets up the Streamlit interface for user input and file upload.
+- Combines the text from the text area and the uploaded file.
+- Runs the main function when the submit button is clicked.
+
+## Usage
+1. Run the Streamlit app:
+    ```bash
+    streamlit run your_script_name.py
+    ```
+
+2. Open the web interface in your browser.
+3. Enter your code in the text area or upload a file containing the code.
+4. Click the "Submit" button to generate the documentation.
+
+## Error Handling
+- The script raises a `ValueError` if the API key or secret is not set.
+- Catches and prints exceptions that occur during the documentation generation process.
+
+This documentation should help you understand and use the provided script effectively.
